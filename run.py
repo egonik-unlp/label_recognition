@@ -7,7 +7,8 @@ from azure.cognitiveservices.vision.computervision.models import OperationStatus
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
 from msrest.authentication import CognitiveServicesCredentials
 
-from difflib import SequenceMatcher
+
+import difflib
 from array import array
 import os
 import json
@@ -60,14 +61,19 @@ def read_images(params, computervision_client):
         print('problema con el reconocimiento de la imagen')
 
 
-def matching(params, words):
+def matching(params, rubros ,words):
     return_array = []
+    if params[rubro] != 'todos':
+        df = pd.read_csv(rubros[params[rubro]])
+    else:
+        df = pd.read_csv('todos.csv')
+
     for word in words:
-        matchear[json]
+        matches = difflib.get_close_matches(word, df['ingrediente'])[0]
         if matcheo:
             return_array.append(
                 {
-                    ingrediente: infotoreport
+                    matcheo : df[df['ingrediente'] == matcheo]['info']
                 }
             )
     if not return_array:
