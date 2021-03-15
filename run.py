@@ -6,7 +6,7 @@ from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
 from msrest.authentication import CognitiveServicesCredentials
-
+from google.colab import files
 
 import difflib
 from array import array
@@ -35,7 +35,7 @@ rubros = {
 
 
 params = {
-    'image_file': file
+    'image_file': file_path
     'rubro': rubro
 }
 
@@ -77,7 +77,7 @@ def matching(params, rubros ,words):
                 }
             )
     if not return_array:
-        r = 'No reconoci nada'
+        r = False 
     else:
         r = return_array
     return r
