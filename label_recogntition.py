@@ -18,14 +18,16 @@ from azure.cognitiveservices.vision.computervision.models import VisualFeatureTy
 from msrest.authentication import CognitiveServicesCredentials
 from google.colab import files
 
+from azure import Azure
+from matching import make_json
 from fuzzywuzzy import fuzz
-import difflib
-from difflib import SequenceMatcher
+# import difflib
+# from difflib import SequenceMatcher
 from array import array
 import os
 import json
 import numpy as np
-from PIL import Image
+# from PIL import Image
 import sys
 import time
 import pandas as pd
@@ -34,6 +36,8 @@ subscription_key = '49d43aca83e24104adb3808800ecae7e'
 endpoint = 'https://goodvibes.cognitiveservices.azure.com/'
 
 computervision_client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
+
+
 
 def fuzzy(word, dataframe):
   ratios = []
@@ -47,6 +51,8 @@ def fuzzy(word, dataframe):
     print(f'El puntaje más alto para {word} fue {ratios[0]}')
   #print(f'{word} -> {ratios}')
   return dic[ratios[0]]
+
+
 
 def read_images(params, computervision_client):
     good_outcome = True
@@ -70,7 +76,10 @@ def read_images(params, computervision_client):
     except Exception as e:
         print(e)
     
-
+def procesamiento_en_local():
+    recognition = Azure.read_images()
+    
+    return
    
 
 
