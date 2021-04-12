@@ -10,15 +10,14 @@ Original file is located at
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-!pip install --upgrade azure-cognitiveservices-vision-computervision
-!pip install fuzzywuzzy python-levenshtein
+#!pip install --upgrade azure-cognitiveservices-vision-computervision
+#!pip install fuzzywuzzy python-levenshtein
 from azure.cognitiveservices.vision.computervision import ComputerVisionClient
 from azure.cognitiveservices.vision.computervision.models import OperationStatusCodes
 from azure.cognitiveservices.vision.computervision.models import VisualFeatureTypes
 from msrest.authentication import CognitiveServicesCredentials
-from google.colab import files
 
-from azure import Azure
+from module_azure import Azure_recognition
 from matching import make_json
 from fuzzywuzzy import fuzz
 # import difflib
@@ -32,103 +31,33 @@ import sys
 import time
 import pandas as pd
 
-subscription_key = '49d43aca83e24104adb3808800ecae7e'
-endpoint = 'https://goodvibes.cognitiveservices.azure.com/'
-
-computervision_client = ComputerVisionClient(endpoint, CognitiveServicesCredentials(subscription_key))
-
-
-
-def fuzzy(word, dataframe):
-  ratios = []
-  dic = {}
-  for ing_words in dataframe.ingrediente.to_list():
-    ratio = fuzz.WRatio(word, ing_words)
-    ratios.append(ratio)
-    dic[ratio] = ing_words
-  ratios.sort(reverse = True)
-  if ratios[0] > 90:
-    print(f'El puntaje más alto para {word} fue {ratios[0]}')
-  #print(f'{word} -> {ratios}')
-  return dic[ratios[0]]
-
-
-
-def read_images(params, computervision_client):
-    good_outcome = True
-    string_ocr = ''
-    try:
-        all_words = []
-        local_image_printed_text_path = params['image_file']
-        local_image_printed_text = open(local_image_printed_text_path, "rb")
-        ocr_result_local = computervision_client.recognize_printed_text_in_stream(local_image_printed_text)
-        for region in ocr_result_local.regions:
-            for line in region.lines:
-                #print("Bounding box: {}".format(line.bounding_box))
-                s = ""
-                for word in line.words:
-                    s += word.text + " "
-                #print(s)
-                all_words += [word.text for word in line.words]
-                words_joined = ' '.join(all_words).split(',')
-                words_split = [palabra.strip() for palabra in words_joined]
-        return words_split
-    except Exception as e:
-        print(e)
     
-def procesamiento_en_local():
-    recognition = Azure.read_images()
+def main(algorithm, params):
+    print(params)
+    ingredient_data = get_from_db()
+    recognition = algorithm.read_images(params = params)
+    print(recognition)
+    return make_json(ingredient_data, recognition)
     
-    return
    
+def get_from_db():
+    '''
+    En el futuro aca se llama a la db con sqlalchemy
+    '''
+    return pd.read_csv('https://raw.githubusercontent.com/egonik-unlp/label_recognition/main/data_rubros/todos.csv')
 
 
-def matching(params ,words):
-    return_array = []
-    if params['rubro'] != 'todos':
-        df = pd.read_csv(rubros[params[rubro]])
-    else:
-        df = pd.read_csv('https://raw.githubusercontent.com/egonik-unlp/label_recognition/main/data_rubros/todos.csv')
-    print(words[-1])
-    for word in words:
-        try:
-          match = fuzzy(word,df)
-          
-          print(f'{word} matcheo ingrediente {match}')
-          #match = difflib.get_close_matches(word, ' '.join(df['ingrediente'].to_list()))[0]
-          #sm = SequenceMatcher(None, word,' '.join(df['ingrediente'].to_list()) )
-          #a, b, s = sm.get_close_mar 
-          #return_array.append(
-          #        {
-          #            'matcheo' : df[df['ingrediente'] == match]['info'],
-          #            'palabra_ocr' : word
-          #        }
-          #    )
-          return_array = ['hulabaloo']
-        except IndexError as e:
-              print(f'no matches found for {word}')
-    if not return_array:
-        r = False 
-    else:
-        r = return_array
-    return r
-
-uploaded = files.upload()
-
-name = list(uploaded.keys())[0]
-
-params = {
-    'rubro': 'todos',
-    'image_file': name 
-}
-
-df = pd.read_csv('https://raw.githubusercontent.com/egonik-unlp/label_recognition/main/data_rubros/todos.csv')
 
 
-a = read_images(params, computervision_client)
-z = matching(params,a )
+### Para pruebas
 
-a
-
-from math import log
-print(10 - 3.55*log(100 - 9,5))
+if __name__ == '__main__':
+    responses = []
+    image_files = [file for file in os.listdir('test_images') if 'jpg' in file]
+    for image in image_files:
+        responses.append(main(Azure_recognition(), {
+            'rubro': 'todos',
+            'image_file': os.path.join('test_images',image) 
+        }))
+    with open('output.json', 'w') as file:
+        json.dump(responses, file)
